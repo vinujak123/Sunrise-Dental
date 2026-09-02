@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Billing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <h2>Sunrise Dental</h2>
+        </div>
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="patients.html" class="nav-item">Patients</a>
+            <a href="appointments.html" class="nav-item">Appointments</a>
+            <a href="billing.html" class="nav-item active">Billing</a>
+            <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Billing & Invoicing</h1>
+            <button class="btn-primary" onclick="toggleBillModal()">+ Generate Bill</button>
+        </header>
+
+        <div class="content-section glass-panel">
+            <h2>Recent Bills</h2>
+            <div class="table-responsive">
+                <table class="data-table" id="billsTable">
+                    <thead>
+                        <tr>
+                            <th>Bill Number</th>
+                            <th>Appt Number</th>
+                            <th>Patient Name</th>
+                            <th>Total Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Mockup data -->
+                        <tr>
+                            <td>B-0001</td><td>A-0004</td><td>Thilini Wickrama</td><td>Rs. 6,500.00</td>
+                            <td><span class="badge success">PAID</span></td>
+                            <td><a href="#" style="color:var(--secondary)">Print</a></td>
+                        </tr>
+                        <tr>
+                            <td>B-0002</td><td>A-0006</td><td>Sanduni Karunaratne</td><td>Rs. 2,250.00</td>
+                            <td><span class="badge warning">PENDING</span></td>
+                            <td><a href="#" style="color:var(--success)" onclick="markPaid(2)">Mark Paid</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Generate Bill Modal -->
+    <div id="billModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="width: 500px; padding: 30px;">
+            <h2>Generate Bill</h2>
+            <form id="billForm" class="dashboard-form mt-4 single-col">
+                <input type="hidden" name="action" value="generate">
+                <div class="input-group">
+                    <label>Appointment ID</label>
+                    <input type="number" name="apptId" required>
+                </div>
+                <div class="input-group">
+                    <label>Consultation Fee (Rs.)</label>
+                    <input type="number" step="0.01" name="consultationFee" value="500.00">
+                </div>
+                <div class="input-group">
+                    <label>Discount (%)</label>
+                    <input type="number" step="0.01" name="discountPercent" value="0.00">
+                </div>
+                <div class="input-group">
+                    <label>Payment Method</label>
+                    <select name="paymentMethod" style="width:100%; padding:12px; background:rgba(15,23,42,0.5); border:1px solid var(--surface-light); color:var(--text-main); border-radius:8px;">
+                        <option value="CASH">Cash</option>
+                        <option value="CARD">Card</option>
+                        <option value="INSURANCE">Insurance</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="toggleBillModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Generate</button>
+                </div>
+            </form>
+            <div id="billMsg" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDashboardLayout();
+            document.getElementById('billForm').addEventListener('submit', handleBilling);
+        });
+
+        function toggleBillModal() {
+            document.getElementById('billModal').classList.toggle('hidden');
+        }
+
+        async function handleBilling(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new URLSearchParams(new FormData(form));
+            const msgBox = document.getElementById('billMsg');
+            
+            try {
+                const response = await fetch('api/billing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                if(result.status === 'success') {
+                    msgBox.innerHTML = `<span class="text-success">${result.message}</span>`;
+                    setTimeout(() => { toggleBillModal(); location.reload(); }, 1500);
+                } else {
+                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                }
+            } catch(e) {
+                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+            }
+        }
+
+        async function markPaid(billId) {
+            if(!confirm('Mark this bill as paid?')) return;
+            const data = new URLSearchParams();
+            data.append('action', 'pay');
+            data.append('billId', billId);
+            
+            try {
+                const response = await fetch('api/billing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                if(result.status === 'success') {
+                    alert('Payment recorded!');
+                    location.reload();
+                } else {
+                    alert(result.message);
+                }
+            } catch(e) { alert('Error updating status'); }
+        }
+    </script>
+</body>
+</html>

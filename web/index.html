@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental Clinic | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-left">
+            <div class="logo">
+                <h1>Sunrise Dental</h1>
+                <p>Advanced Clinic Management</p>
+            </div>
+            <div class="illustration">
+                <!-- Abstract tooth/clinic illustration built with CSS -->
+                <div class="tooth-icon"></div>
+            </div>
+        </div>
+        <div class="login-right">
+            <form id="loginForm" class="glass-form">
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Please login to your account</p>
+                
+                <div id="loginError" class="error-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="off">
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-primary login-btn">
+                    <span>Sign In</span>
+                    <div class="loader hidden"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Appointments</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <h2>Sunrise Dental</h2>
+        </div>
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="patients.html" class="nav-item">Patients</a>
+            <a href="appointments.html" class="nav-item active">Appointments</a>
+            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Manage Appointments</h1>
+            <button class="btn-primary" onclick="toggleBookingModal()">+ Book New</button>
+        </header>
+
+        <div class="content-section glass-panel">
+            <div class="dashboard-form single-col" style="margin-bottom: 20px;">
+                <div class="input-group" style="width: 250px;">
+                    <label>Select Date</label>
+                    <input type="date" id="filterDate" onchange="loadAppointments()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table" id="apptsTable">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Time</th>
+                            <th>Patient</th>
+                            <th>Dentist</th>
+                            <th>Treatment</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Book Appointment Modal -->
+    <div id="bookingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="width: 600px; padding: 30px;">
+            <h2>Book Appointment</h2>
+            <form id="bookingForm" class="dashboard-form mt-4">
+                <div class="input-group">
+                    <label>Patient ID</label>
+                    <input type="number" name="patientId" required>
+                </div>
+                <div class="input-group">
+                    <label>Dentist ID</label>
+                    <input type="number" name="dentistId" required>
+                </div>
+                <div class="input-group">
+                    <label>Treatment ID</label>
+                    <input type="number" name="treatmentId" required>
+                </div>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" name="apptDate" required>
+                </div>
+                <div class="input-group">
+                    <label>Time</label>
+                    <input type="time" name="apptTime" required>
+                </div>
+                <div class="input-group full-width">
+                    <label>Notes</label>
+                    <input type="text" name="notes">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="toggleBookingModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Book Now</button>
+                </div>
+            </form>
+            <div id="bookingMsg" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDashboardLayout();
+            document.getElementById('filterDate').valueAsDate = new Date();
+            loadAppointments();
+
+            document.getElementById('bookingForm').addEventListener('submit', handleBooking);
+        });
+
+        function toggleBookingModal() {
+            const modal = document.getElementById('bookingModal');
+            modal.classList.toggle('hidden');
+        }
+
+        async function loadAppointments() {
+            const date = document.getElementById('filterDate').value;
+            const tbody = document.querySelector('#apptsTable tbody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
+            
+            try {
+                const response = await fetch('api/appointments?date=' + date);
+                if(response.ok) {
+                    const data = await response.json();
+                    renderTable(data);
+                } else {
+                    // Mock static data for view
+                    tbody.innerHTML = `
+                        <tr>
+                            <td>A-0001</td><td>09:00</td><td>Amal Jayawardena</td>
+                            <td>Dr. Kamal Silva</td><td>Checkup</td>
+                            <td><span class="badge success">CONFIRMED</span></td>
+                            <td><a href="#" style="color:var(--secondary)">Edit Status</a></td>
+                        </tr>
+                    `;
+                }
+            } catch(e) {
+                 console.log('Using static mockup data');
+            }
+        }
+
+        async function handleBooking(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = new URLSearchParams(formData);
+            const msgBox = document.getElementById('bookingMsg');
+            
+            try {
+                const response = await fetch('api/appointments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                if(result.status === 'success') {
+                    msgBox.innerHTML = `<span class="text-success">${result.message}</span>`;
+                    setTimeout(() => { toggleBookingModal(); loadAppointments(); form.reset(); }, 1500);
+                } else {
+                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                }
+            } catch(e) {
+                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#apptsTable tbody');
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found for this date.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            data.forEach(a => {
+                const badgeClass = a.status === 'COMPLETED' ? 'success' : (a.status === 'CANCELLED' ? 'danger' : 'warning');
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${a.number}</td>
+                        <td>${a.time}</td>
+                        <td>${a.patientName}</td>
+                        <td>${a.dentistName}</td>
+                        <td>${a.treatment}</td>
+                        <td><span class="badge ${badgeClass}">${a.status}</span></td>
+                        <td><a href="#" style="color:var(--secondary)">Update</a></td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

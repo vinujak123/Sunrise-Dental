@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <h2>Sunrise Dental</h2>
+        </div>
+        
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item active">Dashboard</a>
+            <a href="patients.html" class="nav-item">Patients</a>
+            <a href="appointments.html" class="nav-item">Appointments</a>
+            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Dashboard Overview</h1>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Stats Cards -->
+            <div class="stat-card glass-panel">
+                <h3>Today's Appointments</h3>
+                <p class="stat-value" id="statAppointments">--</p>
+            </div>
+            
+            <div class="stat-card glass-panel">
+                <h3>Completed</h3>
+                <p class="stat-value text-success" id="statCompleted">--</p>
+            </div>
+            
+            <div class="stat-card glass-panel" id="revenueCard">
+                <h3>Revenue Today</h3>
+                <p class="stat-value text-primary" id="statRevenue">Rs. --</p>
+            </div>
+        </div>
+
+        <div class="content-section glass-panel mt-4">
+            <h2>Upcoming Appointments (Today)</h2>
+            <div class="table-responsive">
+                <table class="data-table" id="todayApptsTable">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Patient</th>
+                            <th>Dentist</th>
+                            <th>Treatment</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" class="text-center">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDashboardLayout();
+            
+            // Set date
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            // Hide revenue from Dentists
+            if(localStorage.getItem('userRole') === 'DENTIST') {
+                document.getElementById('revenueCard').classList.add('hidden');
+                document.getElementById('navReports').classList.add('hidden');
+            }
+            
+            // Fetch today's data (Mockup implementation for static view until backend runs)
+            // Real implementation would fetch('/api/appointments')
+            loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // In a real environment, this fetches from the servlet
+                const response = await fetch('api/appointments');
+                if(response.ok) {
+                    const data = await response.json();
+                    renderTable(data);
+                } else {
+                    // Static fallback for design view
+                    document.getElementById('statAppointments').textContent = '6';
+                    document.getElementById('statCompleted').textContent = '2';
+                    document.getElementById('statRevenue').textContent = 'Rs. 8,750';
+                    
+                    document.querySelector('#todayApptsTable tbody').innerHTML = `
+                        <tr><td>09:00</td><td>Amal Jayawardena</td><td>Dr. Kamal Silva</td><td>Checkup</td><td><span class="badge success">Completed</span></td></tr>
+                        <tr><td>09:30</td><td>Kumari Dissanayake</td><td>Dr. Dilani Perera</td><td>Whitening</td><td><span class="badge success">Completed</span></td></tr>
+                        <tr><td>10:00</td><td>Ruwan Fernando</td><td>Dr. Kamal Silva</td><td>Extraction</td><td><span class="badge warning">Pending</span></td></tr>
+                    `;
+                }
+            } catch (e) {
+                console.log('Backend not available yet, showing static data');
+            }
+        }
+    </script>
+</body>
+</html>

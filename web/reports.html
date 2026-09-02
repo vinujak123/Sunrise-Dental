@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Reports</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Include Chart.js for analytics visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <h2>Sunrise Dental</h2>
+        </div>
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="patients.html" class="nav-item">Patients</a>
+            <a href="appointments.html" class="nav-item">Appointments</a>
+            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="reports.html" class="nav-item active" id="navReports">Reports</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Management Reports</h1>
+            <div class="input-group" style="width: 200px; margin: 0;">
+                <input type="date" id="reportDate" onchange="loadReport()">
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="stat-card glass-panel">
+                <h3>Total Revenue</h3>
+                <p class="stat-value text-success" id="totRevenue">Rs. 0.00</p>
+            </div>
+            <div class="stat-card glass-panel">
+                <h3>Total Bills</h3>
+                <p class="stat-value" id="totBills">0</p>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Chart Container -->
+            <div class="content-section glass-panel" style="flex: 2;">
+                <h2>Revenue Trend (Mockup)</h2>
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            if(localStorage.getItem('userRole') === 'DENTIST') {
+                window.location.href = 'dashboard.html'; // Dentists can't see reports
+            }
+            setupDashboardLayout();
+            document.getElementById('reportDate').valueAsDate = new Date();
+            
+            initChart();
+            loadReport();
+        });
+
+        async function loadReport() {
+            const date = document.getElementById('reportDate').value;
+            try {
+                const response = await fetch('api/reports?date=' + date);
+                if(response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totRevenue').textContent = 'Rs. ' + data.totalRevenue.toFixed(2);
+                    document.getElementById('totBills').textContent = data.bills ? data.bills.length : 0;
+                } else {
+                    // Static mock
+                    document.getElementById('totRevenue').textContent = 'Rs. 8,750.00';
+                    document.getElementById('totBills').textContent = '2';
+                }
+            } catch(e) {
+                console.log('Mockup data');
+                document.getElementById('totRevenue').textContent = 'Rs. 8,750.00';
+                document.getElementById('totBills').textContent = '2';
+            }
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{
+                        label: 'Revenue (Rs)',
+                        data: [12000, 19000, 8750, 15000, 22000, 30000],
+                        backgroundColor: 'rgba(37, 99, 235, 0.5)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

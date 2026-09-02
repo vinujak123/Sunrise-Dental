@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Patients</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-header">
+            <h2>Sunrise Dental</h2>
+        </div>
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="patients.html" class="nav-item active">Patients</a>
+            <a href="appointments.html" class="nav-item">Appointments</a>
+            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Patient Management</h1>
+            <button class="btn-primary" onclick="togglePatientModal()">+ Register Patient</button>
+        </header>
+
+        <div class="content-section glass-panel">
+            <div class="dashboard-form single-col" style="margin-bottom: 20px;">
+                <div class="input-group">
+                    <label>Search Patient (Name or Contact)</label>
+                    <input type="text" id="searchInput" placeholder="Enter details..." onkeyup="searchPatients()">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="data-table" id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Number</th>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Register Patient Modal -->
+    <div id="patientModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+        <div class="glass-panel" style="width: 700px; padding: 30px; max-height: 90vh; overflow-y: auto;">
+            <h2>Register New Patient</h2>
+            <form id="patientForm" class="dashboard-form mt-4">
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" name="firstName" required>
+                </div>
+                <div class="input-group">
+                    <label>Last Name</label>
+                    <input type="text" name="lastName" required>
+                </div>
+                <div class="input-group">
+                    <label>Date of Birth</label>
+                    <input type="date" name="dob" required>
+                </div>
+                <div class="input-group">
+                    <label>Contact Number</label>
+                    <input type="text" name="contact" required>
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" name="email">
+                </div>
+                <div class="input-group">
+                    <label>Gender</label>
+                    <input type="text" name="gender" placeholder="MALE / FEMALE">
+                </div>
+                <div class="input-group full-width">
+                    <label>Address</label>
+                    <input type="text" name="address">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="togglePatientModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Register</button>
+                </div>
+            </form>
+            <div id="patientMsg" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDashboardLayout();
+            loadPatients();
+            document.getElementById('patientForm').addEventListener('submit', handleRegistration);
+        });
+
+        function togglePatientModal() {
+            document.getElementById('patientModal').classList.toggle('hidden');
+        }
+
+        async function loadPatients(query = '') {
+            const tbody = document.querySelector('#patientsTable tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+            try {
+                const response = await fetch('api/patients?q=' + query);
+                if(response.ok) {
+                    const data = await response.json();
+                    renderTable(data);
+                } else {
+                    // Static mock
+                    tbody.innerHTML = `<tr><td>1</td><td>P-0001</td><td>Amal Jayawardena</td><td>0771234567</td><td><a href="#" style="color:var(--secondary)">View</a></td></tr>`;
+                }
+            } catch(e) { console.log('Mockup data'); }
+        }
+
+        let debounceTimer;
+        function searchPatients() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                loadPatients(document.getElementById('searchInput').value);
+            }, 500);
+        }
+
+        async function handleRegistration(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new URLSearchParams(new FormData(form));
+            const msgBox = document.getElementById('patientMsg');
+            
+            try {
+                const response = await fetch('api/patients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                if(result.status === 'success') {
+                    msgBox.innerHTML = `<span class="text-success">${result.message} (${result.patientNumber})</span>`;
+                    setTimeout(() => { togglePatientModal(); loadPatients(); form.reset(); }, 2000);
+                } else {
+                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                }
+            } catch(e) {
+                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#patientsTable tbody');
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No patients found.</td></tr>'; return;
+            }
+            tbody.innerHTML = '';
+            data.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td><td>${p.number}</td><td>${p.name}</td><td>${p.contact}</td>
+                        <td><a href="#" style="color:var(--secondary)">View History</a></td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
