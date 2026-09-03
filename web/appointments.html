@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Appointments</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-body">
     
     <!-- Sidebar Navigation -->
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar panel">
         <div class="sidebar-header">
-            <h2>Sunrise Dental</h2>
+            <h2>&#9728; Sunrise Dental</h2>
         </div>
         <div class="user-profile">
             <div class="avatar"></div>
@@ -25,8 +24,9 @@
             <a href="dashboard.html" class="nav-item">Dashboard</a>
             <a href="patients.html" class="nav-item">Patients</a>
             <a href="appointments.html" class="nav-item active">Appointments</a>
-            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="billing.html" class="nav-item" id="navBilling">Billing</a>
             <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="admin.html" class="nav-item" id="navAdmin">&#x2699; Admin Panel</a>
             <a href="help.html" class="nav-item">Help Guide</a>
         </nav>
         <div class="sidebar-footer">
@@ -41,7 +41,7 @@
             <button class="btn-primary" onclick="toggleBookingModal()">+ Book New</button>
         </header>
 
-        <div class="content-section glass-panel">
+        <div class="content-section panel">
             <div class="dashboard-form single-col" style="margin-bottom: 20px;">
                 <div class="input-group" style="width: 250px;">
                     <label>Select Date</label>
@@ -62,7 +62,7 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="apptsBody">
                         <!-- Data will be loaded here -->
                     </tbody>
                 </table>
@@ -71,28 +71,34 @@
     </main>
 
     <!-- Book Appointment Modal -->
-    <div id="bookingModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-        <div class="glass-panel" style="width: 600px; padding: 30px;">
+    <div id="bookingModal" class="hidden modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
             <h2>Book Appointment</h2>
             <form id="bookingForm" class="dashboard-form mt-4">
                 <div class="input-group">
-                    <label>Patient ID</label>
-                    <input type="number" name="patientId" required>
+                    <label>Patient <span class="req">*</span></label>
+                    <select name="patientId" id="selectPatient" required>
+                        <option value="">Loading patients...</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>Dentist ID</label>
-                    <input type="number" name="dentistId" required>
+                    <label>Dentist <span class="req">*</span></label>
+                    <select name="dentistId" id="selectDentist" required>
+                        <option value="">Loading dentists...</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>Treatment ID</label>
-                    <input type="number" name="treatmentId" required>
+                    <label>Treatment <span class="req">*</span></label>
+                    <select name="treatmentId" id="selectTreatment" required>
+                        <option value="">Loading treatments...</option>
+                    </select>
                 </div>
                 <div class="input-group">
-                    <label>Date</label>
+                    <label>Date <span class="req">*</span></label>
                     <input type="date" name="apptDate" required>
                 </div>
                 <div class="input-group">
-                    <label>Time</label>
+                    <label>Time <span class="req">*</span></label>
                     <input type="time" name="apptTime" required>
                 </div>
                 <div class="input-group full-width">
@@ -100,11 +106,35 @@
                     <input type="text" name="notes">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="toggleBookingModal()">Cancel</button>
+                    <button type="button" class="btn-secondary" onclick="toggleBookingModal()">Cancel</button>
                     <button type="submit" class="btn-primary">Book Now</button>
                 </div>
             </form>
-            <div id="bookingMsg" style="margin-top: 15px;"></div>
+            <div id="bookingMsg" style="margin-top: 15px; display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div id="statusModal" class="hidden modal-overlay">
+        <div class="modal-box" style="max-width: 400px;">
+            <h2>Update Status</h2>
+            <form id="statusForm" class="dashboard-form mt-4 single-col">
+                <input type="hidden" id="updateApptId" name="apptId">
+                <div class="input-group">
+                    <label>Status</label>
+                    <select name="status" id="updateStatusVal" required>
+                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                        <option value="NO_SHOW">NO_SHOW</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeStatusModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Update</button>
+                </div>
+            </form>
+            <div id="statusMsg" style="margin-top: 15px; display: none;"></div>
         </div>
     </div>
 
@@ -115,18 +145,71 @@
             setupDashboardLayout();
             document.getElementById('filterDate').valueAsDate = new Date();
             loadAppointments();
-
+            
             document.getElementById('bookingForm').addEventListener('submit', handleBooking);
+            document.getElementById('statusForm').addEventListener('submit', handleStatusUpdate);
+            
+            loadDropdowns();
         });
 
         function toggleBookingModal() {
             const modal = document.getElementById('bookingModal');
             modal.classList.toggle('hidden');
         }
+        
+        function openStatusModal(id, currentStatus) {
+            document.getElementById('updateApptId').value = id;
+            document.getElementById('updateStatusVal').value = currentStatus;
+            document.getElementById('statusModal').classList.remove('hidden');
+            document.getElementById('statusMsg').style.display = 'none';
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.add('hidden');
+        }
+
+        async function loadDropdowns() {
+            try {
+                // Load Patients
+                const pRes = await fetch('api/patients');
+                if (pRes.ok) {
+                    const pData = await pRes.json();
+                    const pSelect = document.getElementById('selectPatient');
+                    pSelect.innerHTML = '<option value="">-- Select Patient --</option>';
+                    pData.forEach(p => {
+                        pSelect.innerHTML += `<option value="${p.id}">${p.name} (${p.contact})</option>`;
+                    });
+                }
+                
+                // Load Dentists
+                const dRes = await fetch('api/dentists');
+                if (dRes.ok) {
+                    const dData = await dRes.json();
+                    const dSelect = document.getElementById('selectDentist');
+                    dSelect.innerHTML = '<option value="">-- Select Dentist --</option>';
+                    dData.forEach(d => {
+                        dSelect.innerHTML += `<option value="${d.id}">${d.name}</option>`;
+                    });
+                }
+                
+                // Load Treatments
+                const tRes = await fetch('api/treatments');
+                if (tRes.ok) {
+                    const tData = await tRes.json();
+                    const tSelect = document.getElementById('selectTreatment');
+                    tSelect.innerHTML = '<option value="">-- Select Treatment --</option>';
+                    tData.forEach(t => {
+                        tSelect.innerHTML += `<option value="${t.id}">${t.name} (${formatCurrency(t.fee)})</option>`;
+                    });
+                }
+            } catch(e) {
+                console.error('Failed to load dropdowns', e);
+            }
+        }
 
         async function loadAppointments() {
             const date = document.getElementById('filterDate').value;
-            const tbody = document.querySelector('#apptsTable tbody');
+            const tbody = document.getElementById('apptsBody');
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
             
             try {
@@ -135,26 +218,17 @@
                     const data = await response.json();
                     renderTable(data);
                 } else {
-                    // Mock static data for view
-                    tbody.innerHTML = `
-                        <tr>
-                            <td>A-0001</td><td>09:00</td><td>Amal Jayawardena</td>
-                            <td>Dr. Kamal Silva</td><td>Checkup</td>
-                            <td><span class="badge success">CONFIRMED</span></td>
-                            <td><a href="#" style="color:var(--secondary)">Edit Status</a></td>
-                        </tr>
-                    `;
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Failed to load.</td></tr>';
                 }
             } catch(e) {
-                 console.log('Using static mockup data');
+                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">Server error.</td></tr>';
             }
         }
 
         async function handleBooking(e) {
             e.preventDefault();
             const form = e.target;
-            const formData = new FormData(form);
-            const data = new URLSearchParams(formData);
+            const data = new URLSearchParams(new FormData(form));
             const msgBox = document.getElementById('bookingMsg');
             
             try {
@@ -164,38 +238,75 @@
                     body: data
                 });
                 const result = await response.json();
+                msgBox.style.display = 'block';
                 if(result.status === 'success') {
                     msgBox.innerHTML = `<span class="text-success">${result.message}</span>`;
-                    setTimeout(() => { toggleBookingModal(); loadAppointments(); form.reset(); }, 1500);
+                    showToast('Appointment booked!', 'success');
+                    setTimeout(() => { toggleBookingModal(); loadAppointments(); form.reset(); msgBox.style.display = 'none'; }, 1500);
                 } else {
-                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                    msgBox.innerHTML = `<span class="error-msg">${result.message}</span>`;
                 }
             } catch(e) {
-                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+                msgBox.style.display = 'block';
+                msgBox.innerHTML = `<span class="error-msg">Server error</span>`;
+            }
+        }
+        
+        async function handleStatusUpdate(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = new URLSearchParams(new FormData(form));
+            const msgBox = document.getElementById('statusMsg');
+            
+            try {
+                const response = await fetch('api/appointments', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                msgBox.style.display = 'block';
+                if(result.status === 'success') {
+                    msgBox.innerHTML = `<span class="text-success">${result.message}</span>`;
+                    showToast('Status updated!', 'success');
+                    setTimeout(() => { closeStatusModal(); loadAppointments(); }, 1500);
+                } else {
+                    msgBox.innerHTML = `<span class="error-msg">${result.message}</span>`;
+                }
+            } catch(e) {
+                msgBox.style.display = 'block';
+                msgBox.innerHTML = `<span class="error-msg">Server error</span>`;
             }
         }
 
         function renderTable(data) {
-            const tbody = document.querySelector('#apptsTable tbody');
+            const tbody = document.getElementById('apptsBody');
             if(data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">No appointments found for this date.</td></tr>';
                 return;
             }
-            tbody.innerHTML = '';
-            data.forEach(a => {
-                const badgeClass = a.status === 'COMPLETED' ? 'success' : (a.status === 'CANCELLED' ? 'danger' : 'warning');
-                tbody.innerHTML += `
+            
+            const rows = data.map(a => {
+                const badgeClass = a.status === 'COMPLETED' ? 'success' : (a.status === 'CANCELLED' || a.status === 'NO_SHOW' ? 'danger' : 'warning');
+                return `
                     <tr>
                         <td>${a.number}</td>
                         <td>${a.time}</td>
-                        <td>${a.patientName}</td>
-                        <td>${a.dentistName}</td>
-                        <td>${a.treatment}</td>
+                        <td>${escHtml(a.patientName)}</td>
+                        <td>${escHtml(a.dentistName)}</td>
+                        <td>${escHtml(a.treatment)}</td>
                         <td><span class="badge ${badgeClass}">${a.status}</span></td>
-                        <td><a href="#" style="color:var(--secondary)">Update</a></td>
+                        <td><button class="btn-sm btn-primary" onclick="openStatusModal(${a.id}, '${a.status}')">Update</button></td>
                     </tr>
                 `;
-            });
+            }).join('');
+            
+            tbody.innerHTML = rows;
+        }
+        
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 </body>

@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Billing</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-body">
     
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar panel">
         <div class="sidebar-header">
-            <h2>Sunrise Dental</h2>
+            <h2>&#9728; Sunrise Dental</h2>
         </div>
         <div class="user-profile">
             <div class="avatar"></div>
@@ -24,8 +23,9 @@
             <a href="dashboard.html" class="nav-item">Dashboard</a>
             <a href="patients.html" class="nav-item">Patients</a>
             <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="billing.html" class="nav-item active">Billing</a>
+            <a href="billing.html" class="nav-item active" id="navBilling">Billing</a>
             <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="admin.html" class="nav-item" id="navAdmin">&#x2699; Admin Panel</a>
             <a href="help.html" class="nav-item">Help Guide</a>
         </nav>
         <div class="sidebar-footer">
@@ -39,8 +39,14 @@
             <button class="btn-primary" onclick="toggleBillModal()">+ Generate Bill</button>
         </header>
 
-        <div class="content-section glass-panel">
-            <h2>Recent Bills</h2>
+        <div class="content-section panel">
+            <div class="dashboard-form single-col" style="margin-bottom: 20px;">
+                <div class="input-group" style="width: 250px;">
+                    <label>Filter Date</label>
+                    <input type="date" id="filterDate" onchange="loadBills()">
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="data-table" id="billsTable">
                     <thead>
@@ -49,22 +55,13 @@
                             <th>Appt Number</th>
                             <th>Patient Name</th>
                             <th>Total Amount</th>
+                            <th>Method</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Mockup data -->
-                        <tr>
-                            <td>B-0001</td><td>A-0004</td><td>Thilini Wickrama</td><td>Rs. 6,500.00</td>
-                            <td><span class="badge success">PAID</span></td>
-                            <td><a href="#" style="color:var(--secondary)">Print</a></td>
-                        </tr>
-                        <tr>
-                            <td>B-0002</td><td>A-0006</td><td>Sanduni Karunaratne</td><td>Rs. 2,250.00</td>
-                            <td><span class="badge warning">PENDING</span></td>
-                            <td><a href="#" style="color:var(--success)" onclick="markPaid(2)">Mark Paid</a></td>
-                        </tr>
+                    <tbody id="billsBody">
+                        <tr><td colspan="7" class="text-center">Loading bills...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -72,14 +69,14 @@
     </main>
 
     <!-- Generate Bill Modal -->
-    <div id="billModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-        <div class="glass-panel" style="width: 500px; padding: 30px;">
+    <div id="billModal" class="hidden modal-overlay">
+        <div class="modal-box" style="max-width: 500px;">
             <h2>Generate Bill</h2>
             <form id="billForm" class="dashboard-form mt-4 single-col">
                 <input type="hidden" name="action" value="generate">
                 <div class="input-group">
                     <label>Appointment ID</label>
-                    <input type="number" name="apptId" required>
+                    <input type="number" name="apptId" required placeholder="Enter Appt ID">
                 </div>
                 <div class="input-group">
                     <label>Consultation Fee (Rs.)</label>
@@ -91,18 +88,18 @@
                 </div>
                 <div class="input-group">
                     <label>Payment Method</label>
-                    <select name="paymentMethod" style="width:100%; padding:12px; background:rgba(15,23,42,0.5); border:1px solid var(--surface-light); color:var(--text-main); border-radius:8px;">
+                    <select name="paymentMethod">
                         <option value="CASH">Cash</option>
                         <option value="CARD">Card</option>
                         <option value="INSURANCE">Insurance</option>
                     </select>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="toggleBillModal()">Cancel</button>
+                    <button type="button" class="btn-secondary" onclick="toggleBillModal()">Cancel</button>
                     <button type="submit" class="btn-primary">Generate</button>
                 </div>
             </form>
-            <div id="billMsg" style="margin-top: 15px;"></div>
+            <div id="billMsg" style="margin-top: 15px; display: none;"></div>
         </div>
     </div>
 
@@ -111,11 +108,58 @@
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             setupDashboardLayout();
+            document.getElementById('filterDate').valueAsDate = new Date();
+            loadBills();
             document.getElementById('billForm').addEventListener('submit', handleBilling);
         });
 
         function toggleBillModal() {
             document.getElementById('billModal').classList.toggle('hidden');
+        }
+
+        async function loadBills() {
+            const date = document.getElementById('filterDate').value;
+            const tbody = document.getElementById('billsBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
+            
+            try {
+                const response = await fetch('api/billing?date=' + date);
+                if(response.ok) {
+                    const data = await response.json();
+                    renderTable(data);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Failed to load bills.</td></tr>';
+                }
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Server error.</td></tr>';
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('billsBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No bills found for this date.</td></tr>';
+                return;
+            }
+            
+            const rows = data.map(b => {
+                const badgeClass = b.status === 'PAID' ? 'success' : 'warning';
+                let actionLink = b.status === 'PENDING' 
+                    ? `<button class="btn-sm btn-primary" onclick="markPaid(${b.id})">Mark Paid</button>`
+                    : `<button class="btn-sm btn-secondary" onclick="window.print()">Print</button>`;
+                return `
+                    <tr>
+                        <td>${b.billNumber}</td>
+                        <td>${b.apptNumber || '—'}</td>
+                        <td>${escHtml(b.patientName)}</td>
+                        <td>${formatCurrency(b.totalAmount)}</td>
+                        <td>${b.method}</td>
+                        <td><span class="badge ${badgeClass}">${b.status}</span></td>
+                        <td>${actionLink}</td>
+                    </tr>
+                `;
+            }).join('');
+            tbody.innerHTML = rows;
         }
 
         async function handleBilling(e) {
@@ -131,14 +175,17 @@
                     body: data
                 });
                 const result = await response.json();
+                msgBox.style.display = 'block';
                 if(result.status === 'success') {
                     msgBox.innerHTML = `<span class="text-success">${result.message}</span>`;
-                    setTimeout(() => { toggleBillModal(); location.reload(); }, 1500);
+                    showToast('Bill generated!', 'success');
+                    setTimeout(() => { toggleBillModal(); loadBills(); form.reset(); msgBox.style.display = 'none'; }, 1500);
                 } else {
-                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                    msgBox.innerHTML = `<span class="error-msg">${result.message}</span>`;
                 }
             } catch(e) {
-                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+                msgBox.style.display = 'block';
+                msgBox.innerHTML = `<span class="error-msg">Server error</span>`;
             }
         }
 
@@ -156,12 +203,19 @@
                 });
                 const result = await response.json();
                 if(result.status === 'success') {
-                    alert('Payment recorded!');
-                    location.reload();
+                    showToast('Payment recorded!', 'success');
+                    loadBills();
                 } else {
-                    alert(result.message);
+                    showToast(result.message || 'Failed to record payment', 'error');
                 }
-            } catch(e) { alert('Error updating status'); }
+            } catch(e) { 
+                showToast('Server error', 'error');
+            }
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 </body>

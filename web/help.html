@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Help Guide</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-body">
     
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar panel">
         <div class="sidebar-header">
             <h2>Sunrise Dental</h2>
         </div>
@@ -38,28 +37,28 @@
             <h1>Staff Help Guide</h1>
         </header>
 
-        <div class="content-section glass-panel">
+        <div class="content-section panel">
             <h2>System Navigation</h2>
             <p class="text-muted" style="margin-bottom: 20px;">Sunrise Dental Management System version 1.0 (Advanced Programming Project)</p>
             
-            <div style="display: grid; gap: 20px;">
-                <div class="glass-panel" style="padding: 20px; background: rgba(0,0,0,0.2);">
-                    <h3 style="color: var(--secondary); margin-bottom: 10px;">1. Patients</h3>
+            <div style="display: grid; gap: 14px;">
+                <div class="help-block">
+                    <h3>1. Patients</h3>
                     <p>Use the Patients tab to register new patients. The system automatically generates a unique Patient Number (e.g., P-0001).</p>
                 </div>
-                
-                <div class="glass-panel" style="padding: 20px; background: rgba(0,0,0,0.2);">
-                    <h3 style="color: var(--secondary); margin-bottom: 10px;">2. Appointments</h3>
+
+                <div class="help-block">
+                    <h3>2. Appointments</h3>
                     <p>Book appointments for registered patients. The system features an automatic <strong>double-booking prevention mechanism</strong> using Database Triggers. You cannot book two patients for the same dentist at conflicting times.</p>
                 </div>
-                
-                <div class="glass-panel" style="padding: 20px; background: rgba(0,0,0,0.2);">
-                    <h3 style="color: var(--secondary); margin-bottom: 10px;">3. Billing</h3>
+
+                <div class="help-block">
+                    <h3>3. Billing</h3>
                     <p>Generate bills for completed appointments. The system calculates totals automatically based on treatment fees. Updates are logged in the secure Audit Log.</p>
                 </div>
-                
-                <div class="glass-panel" style="padding: 20px; background: rgba(0,0,0,0.2);">
-                    <h3 style="color: var(--secondary); margin-bottom: 10px;">4. Reports</h3>
+
+                <div class="help-block">
+                    <h3>4. Reports</h3>
                     <p>View daily revenue and generated bills. Only accessible to Admin and Receptionist roles.</p>
                 </div>
             </div>

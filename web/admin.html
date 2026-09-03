@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunrise Dental | Admin Panel</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-body">
+    
+    <aside class="sidebar panel">
+        <div class="sidebar-header">
+            <h2>&#9728; Sunrise Dental</h2>
+        </div>
+        <div class="user-profile">
+            <div class="avatar"></div>
+            <div class="user-info">
+                <p id="sidebarUserName" class="name">Loading...</p>
+                <p id="sidebarUserRole" class="role">Staff</p>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">Dashboard</a>
+            <a href="patients.html" class="nav-item">Patients</a>
+            <a href="appointments.html" class="nav-item">Appointments</a>
+            <a href="billing.html" class="nav-item" id="navBilling">Billing</a>
+            <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="admin.html" class="nav-item active" id="navAdmin">&#x2699; Admin Panel</a>
+            <a href="help.html" class="nav-item">Help Guide</a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="#" id="logoutBtn" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Admin Panel</h1>
+            <div class="date-display" id="currentDate"></div>
+        </header>
+
+        <div class="content-section panel mt-4">
+            <h2>Pending Staff Registrations</h2>
+            <p class="text-muted" style="margin-bottom: 15px;">Approve or reject self-registered staff members.</p>
+            
+            <div class="table-responsive">
+                <table class="data-table" id="pendingUsersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Contact</th>
+                            <th>Registered On</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingUsersBody">
+                        <tr><td colspan="7" class="text-center">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDashboardLayout();
+            
+            // Extra guard: Kick out if not admin
+            if (localStorage.getItem('userRole') !== 'ADMIN') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            
+            loadPendingUsers();
+        });
+
+        async function loadPendingUsers() {
+            const tbody = document.getElementById('pendingUsersBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Loading pending users...</td></tr>';
+            
+            try {
+                const response = await fetch('api/admin/users');
+                const data = await response.json();
+                console.log('Admin API response:', data);
+                
+                // If the response is an error object (not an array), show the error
+                if (!Array.isArray(data)) {
+                    const msg = data.message || 'Unauthorized or unexpected response.';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">' + msg + ' <a href="#" onclick="document.getElementById(\'logoutBtn\').click(); return false;">Click here to login again.</a></td></tr>';
+                    
+                    // Auto-redirect if unauthorized (session expired)
+                    if (data.message && data.message.includes("Unauthorized")) {
+                        setTimeout(() => {
+                            localStorage.clear();
+                            window.location.href = 'logout';
+                        }, 2000);
+                    }
+                    return;
+                }
+                
+                renderTable(data);
+            } catch (e) {
+                console.error('Admin API error:', e);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Server error. Please ensure you are logged in as Admin.</td></tr>';
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('pendingUsersBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No pending registrations found.</td></tr>';
+                return;
+            }
+            
+            const rows = data.map(u => {
+                return `
+                    <tr>
+                        <td>${u.id}</td>
+                        <td>${escHtml(u.fullName)}</td>
+                        <td>${escHtml(u.username)}</td>
+                        <td>${u.role}</td>
+                        <td>${escHtml(u.contact)}<br><small>${escHtml(u.email)}</small></td>
+                        <td>${u.createdAt ? u.createdAt.substring(0, 16) : ''}</td>
+                        <td>
+                            <button class="btn-sm btn-primary" onclick="handleUserAction(${u.id}, 'approve')">Approve</button>
+                            <button class="btn-sm btn-danger" onclick="handleUserAction(${u.id}, 'reject')">Reject</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            tbody.innerHTML = rows;
+        }
+
+        async function handleUserAction(userId, action) {
+            const actionText = action === 'approve' ? 'Approve' : 'Reject & Delete';
+            if (!confirm(`Are you sure you want to ${actionText} this user?`)) return;
+            
+            const data = new URLSearchParams();
+            data.append('userId', userId);
+            data.append('action', action);
+            
+            try {
+                const response = await fetch('api/admin/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showToast(`User successfully ${action}d.`, 'success');
+                    loadPendingUsers();
+                } else {
+                    showToast(result.message || 'Operation failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Server error.', 'error');
+            }
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</body>
+</html>

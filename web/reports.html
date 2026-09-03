@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Reports</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <!-- Include Chart.js for analytics visualization -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="dashboard-body">
     
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar panel">
         <div class="sidebar-header">
             <h2>Sunrise Dental</h2>
         </div>
@@ -44,11 +41,11 @@
         </header>
 
         <div class="dashboard-grid">
-            <div class="stat-card glass-panel">
+            <div class="stat-card panel">
                 <h3>Total Revenue</h3>
                 <p class="stat-value text-success" id="totRevenue">Rs. 0.00</p>
             </div>
-            <div class="stat-card glass-panel">
+            <div class="stat-card panel">
                 <h3>Total Bills</h3>
                 <p class="stat-value" id="totBills">0</p>
             </div>
@@ -56,9 +53,9 @@
 
         <div class="dashboard-grid">
             <!-- Chart Container -->
-            <div class="content-section glass-panel" style="flex: 2;">
+            <div class="content-section panel" style="flex: 2;">
                 <h2>Revenue Trend (Mockup)</h2>
-                <canvas id="revenueChart" height="100"></canvas>
+                <div class="bar-chart" id="revenueChart"></div>
             </div>
         </div>
     </main>
@@ -98,37 +95,32 @@
         }
 
         function initChart() {
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-                    datasets: [{
-                        label: 'Revenue (Rs)',
-                        data: [12000, 19000, 8750, 15000, 22000, 30000],
-                        backgroundColor: 'rgba(37, 99, 235, 0.5)',
-                        borderColor: 'rgba(37, 99, 235, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#94a3b8' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#94a3b8' }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: '#f8fafc' } }
-                    }
-                }
+            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const values = [12000, 19000, 8750, 15000, 22000, 30000];
+            const max = Math.max(...values);
+            const container = document.getElementById('revenueChart');
+
+            container.innerHTML = '';
+            values.forEach((value, i) => {
+                const col = document.createElement('div');
+                col.className = 'bar-col';
+
+                const valueLabel = document.createElement('div');
+                valueLabel.className = 'bar-value';
+                valueLabel.textContent = value.toLocaleString();
+
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = Math.round((value / max) * 100) + '%';
+
+                const label = document.createElement('div');
+                label.className = 'bar-label';
+                label.textContent = labels[i];
+
+                col.appendChild(valueLabel);
+                col.appendChild(bar);
+                col.appendChild(label);
+                container.appendChild(col);
             });
         }
     </script>

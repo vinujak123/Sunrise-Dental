@@ -4,46 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental Clinic | Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Sunrise Dental Clinic Staff Portal – Secure login for Admin, Receptionist and Dentist accounts.">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="login-body">
-    <div class="login-container">
+    <div class="login-container" style="max-width:420px;width:100%;">
         <div class="login-left">
             <div class="logo">
-                <h1>Sunrise Dental</h1>
+                <h1>&#9728; Sunrise Dental</h1>
                 <p>Advanced Clinic Management</p>
-            </div>
-            <div class="illustration">
-                <!-- Abstract tooth/clinic illustration built with CSS -->
-                <div class="tooth-icon"></div>
             </div>
         </div>
         <div class="login-right">
-            <form id="loginForm" class="glass-form">
+
+            <!-- Tab Switcher -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLoginBtn" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" id="tabRegisterBtn" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- ====== LOGIN FORM ====== -->
+            <form id="loginForm" class="login-form auth-panel">
                 <h2>Welcome Back</h2>
-                <p class="subtitle">Please login to your account</p>
-                
+                <p class="subtitle">Sign in to your staff account</p>
+
                 <div id="loginError" class="error-msg hidden"></div>
+                <div id="loginSuccess" class="success-msg hidden"></div>
 
                 <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autocomplete="off">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" name="username" required autocomplete="off" placeholder="Enter username">
                 </div>
-                
                 <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" name="password" required placeholder="Enter password">
                 </div>
-                
-                <button type="submit" class="btn-primary login-btn">
+
+                <button type="submit" class="btn-primary login-btn" id="loginBtn">
                     <span>Sign In</span>
                     <div class="loader hidden"></div>
                 </button>
+
+                <p class="auth-switch-hint">New staff member? <a href="#" onclick="switchTab('register'); return false;">Register here</a></p>
             </form>
+
+            <!-- ====== REGISTER FORM ====== -->
+            <form id="registerForm" class="login-form auth-panel hidden">
+                <h2>Staff Registration</h2>
+                <p class="subtitle">Submit your details for Admin approval</p>
+
+                <div id="registerError" class="error-msg hidden"></div>
+                <div id="registerSuccess" class="success-msg hidden"></div>
+
+                <div class="input-group">
+                    <label for="regFullName">Full Name <span class="req">*</span></label>
+                    <input type="text" id="regFullName" name="fullName" required placeholder="Dr. / Mr. / Ms. Full Name">
+                </div>
+                <div class="input-group">
+                    <label for="regUsername">Username <span class="req">*</span></label>
+                    <input type="text" id="regUsername" name="username" required autocomplete="off" placeholder="Choose a username">
+                </div>
+                <div class="input-group">
+                    <label for="regRole">Role <span class="req">*</span></label>
+                    <select id="regRole" name="role" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="RECEPTIONIST">Receptionist</option>
+                        <option value="DENTIST">Dentist</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="regEmail">Email Address</label>
+                    <input type="email" id="regEmail" name="email" placeholder="email@example.com">
+                </div>
+                <div class="input-group">
+                    <label for="regContact">Contact Number</label>
+                    <input type="text" id="regContact" name="contact" placeholder="07X XXXXXXX">
+                </div>
+                <div class="input-group">
+                    <label for="regPassword">Password <span class="req">*</span></label>
+                    <input type="password" id="regPassword" name="password" required placeholder="Min. 6 characters">
+                </div>
+                <div class="input-group">
+                    <label for="regConfirmPassword">Confirm Password <span class="req">*</span></label>
+                    <input type="password" id="regConfirmPassword" name="confirmPassword" required placeholder="Re-enter password">
+                </div>
+
+                <button type="submit" class="btn-primary login-btn" id="registerBtn">
+                    <span>Submit Registration</span>
+                    <div class="loader hidden"></div>
+                </button>
+
+                <p class="auth-switch-hint">Already have an account? <a href="#" onclick="switchTab('login'); return false;">Sign In</a></p>
+                <p class="auth-hint"><strong>Note:</strong> Your account will be reviewed by an Admin before you can log in.</p>
+            </form>
+
         </div>
     </div>
 
     <script src="js/main.js"></script>
+    <script>
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const tabLoginBtn = document.getElementById('tabLoginBtn');
+            const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+                tabLoginBtn.classList.add('active');
+                tabRegisterBtn.classList.remove('active');
+            } else {
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                tabRegisterBtn.classList.add('active');
+                tabLoginBtn.classList.remove('active');
+            }
+        }
+    </script>
 </body>
 </html>

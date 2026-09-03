@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-body">
     
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar glass-panel">
+    <aside class="sidebar panel">
         <div class="sidebar-header">
-            <h2>Sunrise Dental</h2>
+            <h2>&#9728; Sunrise Dental</h2>
         </div>
         
         <div class="user-profile">
@@ -27,8 +25,9 @@
             <a href="dashboard.html" class="nav-item active">Dashboard</a>
             <a href="patients.html" class="nav-item">Patients</a>
             <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="billing.html" class="nav-item" id="navBilling">Billing</a>
             <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="admin.html" class="nav-item" id="navAdmin">&#x2699; Admin Panel</a>
             <a href="help.html" class="nav-item">Help Guide</a>
         </nav>
         
@@ -37,7 +36,6 @@
         </div>
     </aside>
 
-    <!-- Main Content Area -->
     <main class="main-content">
         <header class="top-header">
             <h1>Dashboard Overview</h1>
@@ -45,24 +43,23 @@
         </header>
 
         <div class="dashboard-grid">
-            <!-- Stats Cards -->
-            <div class="stat-card glass-panel">
+            <div class="stat-card panel">
                 <h3>Today's Appointments</h3>
                 <p class="stat-value" id="statAppointments">--</p>
             </div>
             
-            <div class="stat-card glass-panel">
+            <div class="stat-card panel">
                 <h3>Completed</h3>
                 <p class="stat-value text-success" id="statCompleted">--</p>
             </div>
             
-            <div class="stat-card glass-panel" id="revenueCard">
+            <div class="stat-card panel" id="revenueCard">
                 <h3>Revenue Today</h3>
                 <p class="stat-value text-primary" id="statRevenue">Rs. --</p>
             </div>
         </div>
 
-        <div class="content-section glass-panel mt-4">
+        <div class="content-section panel mt-4">
             <h2>Upcoming Appointments (Today)</h2>
             <div class="table-responsive">
                 <table class="data-table" id="todayApptsTable">
@@ -75,7 +72,7 @@
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="todayApptsBody">
                         <tr><td colspan="5" class="text-center">Loading data...</td></tr>
                     </tbody>
                 </table>
@@ -89,44 +86,72 @@
             checkAuth();
             setupDashboardLayout();
             
-            // Set date
-            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', { 
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            
+            document.getElementById('currentDate').textContent = today.toLocaleDateString('en-GB', { 
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
             });
             
-            // Hide revenue from Dentists
-            if(localStorage.getItem('userRole') === 'DENTIST') {
-                document.getElementById('revenueCard').classList.add('hidden');
-                document.getElementById('navReports').classList.add('hidden');
-            }
-            
-            // Fetch today's data (Mockup implementation for static view until backend runs)
-            // Real implementation would fetch('/api/appointments')
-            loadDashboardData();
+            loadDashboardData(dateStr);
         });
 
-        async function loadDashboardData() {
+        async function loadDashboardData(dateStr) {
             try {
-                // In a real environment, this fetches from the servlet
-                const response = await fetch('api/appointments');
-                if(response.ok) {
-                    const data = await response.json();
-                    renderTable(data);
+                const apptRes = await fetch('api/appointments?date=' + dateStr);
+                const billRes = await fetch('api/billing?date=' + dateStr);
+                
+                let appts = [];
+                let bills = [];
+                
+                if(apptRes.ok) appts = await apptRes.json();
+                if(billRes.ok) bills = await billRes.json();
+                
+                let completedCount = 0;
+                appts.forEach(a => {
+                    if (a.status === 'COMPLETED') completedCount++;
+                });
+                
+                let revenue = 0;
+                bills.forEach(b => {
+                    if (b.status === 'PAID') revenue += b.totalAmount;
+                });
+                
+                document.getElementById('statAppointments').textContent = appts.length;
+                document.getElementById('statCompleted').textContent = completedCount;
+                document.getElementById('statRevenue').textContent = formatCurrency(revenue);
+                
+                const tbody = document.getElementById('todayApptsBody');
+                if (appts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No appointments scheduled for today.</td></tr>';
                 } else {
-                    // Static fallback for design view
-                    document.getElementById('statAppointments').textContent = '6';
-                    document.getElementById('statCompleted').textContent = '2';
-                    document.getElementById('statRevenue').textContent = 'Rs. 8,750';
-                    
-                    document.querySelector('#todayApptsTable tbody').innerHTML = `
-                        <tr><td>09:00</td><td>Amal Jayawardena</td><td>Dr. Kamal Silva</td><td>Checkup</td><td><span class="badge success">Completed</span></td></tr>
-                        <tr><td>09:30</td><td>Kumari Dissanayake</td><td>Dr. Dilani Perera</td><td>Whitening</td><td><span class="badge success">Completed</span></td></tr>
-                        <tr><td>10:00</td><td>Ruwan Fernando</td><td>Dr. Kamal Silva</td><td>Extraction</td><td><span class="badge warning">Pending</span></td></tr>
-                    `;
+                    const rows = appts.map(a => {
+                        const badgeClass = a.status === 'COMPLETED' ? 'success' : (a.status === 'CANCELLED' || a.status === 'NO_SHOW' ? 'danger' : 'warning');
+                        return `
+                            <tr>
+                                <td>${a.time}</td>
+                                <td>${escHtml(a.patientName)}</td>
+                                <td>${escHtml(a.dentistName)}</td>
+                                <td>${escHtml(a.treatment)}</td>
+                                <td><span class="badge ${badgeClass}">${a.status}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                    tbody.innerHTML = rows;
                 }
+
             } catch (e) {
-                console.log('Backend not available yet, showing static data');
+                console.log('Error loading data', e);
+                document.getElementById('todayApptsBody').innerHTML = '<tr><td colspan="5" class="text-center">Error loading dashboard data.</td></tr>';
             }
+        }
+        
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 </body>

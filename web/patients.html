@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sunrise Dental | Patients</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="dashboard-body">
-    
-    <aside class="sidebar glass-panel">
-        <div class="sidebar-header">
-            <h2>Sunrise Dental</h2>
-        </div>
+
+    <aside class="sidebar panel">
+        <div class="sidebar-header"><h2>&#9728; Sunrise Dental</h2></div>
         <div class="user-profile">
             <div class="avatar"></div>
             <div class="user-info">
@@ -24,8 +21,9 @@
             <a href="dashboard.html" class="nav-item">Dashboard</a>
             <a href="patients.html" class="nav-item active">Patients</a>
             <a href="appointments.html" class="nav-item">Appointments</a>
-            <a href="billing.html" class="nav-item">Billing</a>
+            <a href="billing.html" class="nav-item" id="navBilling">Billing</a>
             <a href="reports.html" class="nav-item" id="navReports">Reports</a>
+            <a href="admin.html" class="nav-item" id="navAdmin">&#x2699; Admin Panel</a>
             <a href="help.html" class="nav-item">Help Guide</a>
         </nav>
         <div class="sidebar-footer">
@@ -36,14 +34,14 @@
     <main class="main-content">
         <header class="top-header">
             <h1>Patient Management</h1>
-            <button class="btn-primary" onclick="togglePatientModal()">+ Register Patient</button>
+            <button class="btn-primary" id="openRegisterBtn" onclick="openPatientModal()">+ Register Patient</button>
         </header>
 
-        <div class="content-section glass-panel">
+        <div class="content-section panel">
             <div class="dashboard-form single-col" style="margin-bottom: 20px;">
                 <div class="input-group">
                     <label>Search Patient (Name or Contact)</label>
-                    <input type="text" id="searchInput" placeholder="Enter details..." onkeyup="searchPatients()">
+                    <input type="text" id="searchInput" placeholder="Type to search..." oninput="searchPatients()">
                 </div>
             </div>
 
@@ -51,136 +49,280 @@
                 <table class="data-table" id="patientsTable">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Number</th>
-                            <th>Name</th>
+                            <th>#</th>
+                            <th>P. Number</th>
+                            <th>Full Name</th>
                             <th>Contact</th>
-                            <th>Action</th>
+                            <th>Gender</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="patientsBody">
+                        <tr><td colspan="6" class="text-center">Loading patients...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Register Patient Modal -->
-    <div id="patientModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-        <div class="glass-panel" style="width: 700px; padding: 30px; max-height: 90vh; overflow-y: auto;">
-            <h2>Register New Patient</h2>
+    <!-- ===== REGISTER / EDIT PATIENT MODAL ===== -->
+    <div id="patientModal" class="hidden modal-overlay">
+        <div class="modal-box" style="max-width: 720px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="patientModalTitle">Register New Patient</h2>
+                <button class="btn-icon-close" onclick="closePatientModal()">&#10005;</button>
+            </div>
+
+            <div id="patientMsg" class="mt-4" style="display:none;padding:10px;border-radius:4px;"></div>
+
             <form id="patientForm" class="dashboard-form mt-4">
+                <input type="hidden" id="editPatientId" name="patientId" value="">
+
                 <div class="input-group">
-                    <label>First Name</label>
-                    <input type="text" name="firstName" required>
+                    <label>First Name <span class="req">*</span></label>
+                    <input type="text" id="fFirstName" name="firstName" required placeholder="First name">
                 </div>
                 <div class="input-group">
-                    <label>Last Name</label>
-                    <input type="text" name="lastName" required>
+                    <label>Last Name <span class="req">*</span></label>
+                    <input type="text" id="fLastName" name="lastName" required placeholder="Last name">
                 </div>
                 <div class="input-group">
-                    <label>Date of Birth</label>
-                    <input type="date" name="dob" required>
-                </div>
-                <div class="input-group">
-                    <label>Contact Number</label>
-                    <input type="text" name="contact" required>
-                </div>
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" name="email">
+                    <label>Date of Birth <span class="req">*</span></label>
+                    <input type="date" id="fDob" name="dob" required>
                 </div>
                 <div class="input-group">
                     <label>Gender</label>
-                    <input type="text" name="gender" placeholder="MALE / FEMALE">
+                    <select id="fGender" name="gender">
+                        <option value="">-- Select --</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Blood Group</label>
+                    <select id="fBloodGroup" name="bloodGroup">
+                        <option value="">-- Select --</option>
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Contact Number <span class="req">*</span></label>
+                    <input type="text" id="fContact" name="contact" required placeholder="07X XXXXXXX">
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="fEmail" name="email" placeholder="email@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Emergency Contact</label>
+                    <input type="text" id="fEmergencyContact" name="emergencyContact" placeholder="Name & number">
                 </div>
                 <div class="input-group full-width">
                     <label>Address</label>
-                    <input type="text" name="address">
+                    <input type="text" id="fAddress" name="address" placeholder="Street address">
                 </div>
+                <div class="input-group">
+                    <label>City</label>
+                    <input type="text" id="fCity" name="city" placeholder="City">
+                </div>
+                <div class="input-group full-width">
+                    <label>Medical Notes</label>
+                    <textarea id="fMedicalNotes" name="medicalNotes" rows="2" placeholder="Pre-existing conditions, etc."></textarea>
+                </div>
+                <div class="input-group full-width">
+                    <label>Allergies</label>
+                    <textarea id="fAllergies" name="allergies" rows="2" placeholder="Known drug or material allergies"></textarea>
+                </div>
+
                 <div class="form-actions">
-                    <button type="button" class="btn-primary" style="background: var(--surface-light);" onclick="togglePatientModal()">Cancel</button>
-                    <button type="submit" class="btn-primary">Register</button>
+                    <button type="button" class="btn-secondary" onclick="closePatientModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" id="patientSubmitBtn">Register Patient</button>
                 </div>
             </form>
-            <div id="patientMsg" style="margin-top: 15px;"></div>
         </div>
     </div>
 
     <script src="js/main.js"></script>
     <script>
+        let editMode = false;
+
         document.addEventListener('DOMContentLoaded', () => {
             checkAuth();
             setupDashboardLayout();
             loadPatients();
-            document.getElementById('patientForm').addEventListener('submit', handleRegistration);
+            document.getElementById('patientForm').addEventListener('submit', handlePatientSubmit);
         });
 
-        function togglePatientModal() {
-            document.getElementById('patientModal').classList.toggle('hidden');
+        /* ---- Modal ---- */
+        function openPatientModal(patient = null) {
+            editMode = !!patient;
+            const form = document.getElementById('patientForm');
+            form.reset();
+            hidePatientMsg();
+
+            if (editMode) {
+                document.getElementById('patientModalTitle').textContent = 'Edit Patient';
+                document.getElementById('patientSubmitBtn').textContent  = 'Save Changes';
+                document.getElementById('editPatientId').value = patient.id;
+                document.getElementById('fFirstName').value        = patient.firstName || '';
+                document.getElementById('fLastName').value         = patient.lastName || '';
+                document.getElementById('fDob').value              = patient.dob || '';
+                document.getElementById('fGender').value           = patient.gender || '';
+                document.getElementById('fBloodGroup').value       = patient.bloodGroup || '';
+                document.getElementById('fContact').value          = patient.contact || '';
+                document.getElementById('fEmail').value            = patient.email || '';
+                document.getElementById('fEmergencyContact').value = patient.emergencyContact || '';
+                document.getElementById('fAddress').value          = patient.address || '';
+                document.getElementById('fCity').value             = patient.city || '';
+                document.getElementById('fMedicalNotes').value     = patient.medicalNotes || '';
+                document.getElementById('fAllergies').value        = patient.allergies || '';
+            } else {
+                document.getElementById('patientModalTitle').textContent = 'Register New Patient';
+                document.getElementById('patientSubmitBtn').textContent  = 'Register Patient';
+                document.getElementById('editPatientId').value = '';
+            }
+            document.getElementById('patientModal').classList.remove('hidden');
         }
 
-        async function loadPatients(query = '') {
-            const tbody = document.querySelector('#patientsTable tbody');
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
-            try {
-                const response = await fetch('api/patients?q=' + query);
-                if(response.ok) {
-                    const data = await response.json();
-                    renderTable(data);
-                } else {
-                    // Static mock
-                    tbody.innerHTML = `<tr><td>1</td><td>P-0001</td><td>Amal Jayawardena</td><td>0771234567</td><td><a href="#" style="color:var(--secondary)">View</a></td></tr>`;
-                }
-            } catch(e) { console.log('Mockup data'); }
+        function closePatientModal() {
+            document.getElementById('patientModal').classList.add('hidden');
         }
 
+        function showPatientMsg(msg, isSuccess) {
+            const el = document.getElementById('patientMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.background = isSuccess ? 'var(--success-bg)' : 'var(--danger-bg)';
+            el.style.color      = isSuccess ? 'var(--success-text)' : 'var(--danger-text)';
+        }
+
+        function hidePatientMsg() {
+            const el = document.getElementById('patientMsg');
+            el.style.display = 'none';
+        }
+
+        /* ---- Load patients ---- */
         let debounceTimer;
+        async function loadPatients(query = '') {
+            const tbody = document.getElementById('patientsBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            try {
+                const res = await fetch('api/patients?q=' + encodeURIComponent(query));
+                if (!res.ok) throw new Error('Server error');
+                const data = await res.json();
+                renderPatients(data);
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Could not load patient data.</td></tr>';
+            }
+        }
+
         function searchPatients() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
-                loadPatients(document.getElementById('searchInput').value);
-            }, 500);
+                loadPatients(document.getElementById('searchInput').value.trim());
+            }, 400);
         }
 
-        async function handleRegistration(e) {
+        function renderPatients(data) {
+            const tbody = document.getElementById('patientsBody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center">No patients found.</td></tr>';
+                return;
+            }
+            const rows = data.map(p => `
+                <tr>
+                    <td>${p.id}</td>
+                    <td><strong>${p.number}</strong></td>
+                    <td>${escHtml(p.name)}</td>
+                    <td>${escHtml(p.contact)}</td>
+                    <td>${p.gender || '—'}</td>
+                    <td>
+                        <button class="btn-sm btn-primary" onclick="editPatient(${p.id})">Edit</button>
+                        <button class="btn-sm btn-danger" onclick="deactivatePatient(${p.id}, '${escHtml(p.name)}')">Deactivate</button>
+                    </td>
+                </tr>
+            `).join('');
+            tbody.innerHTML = rows;
+        }
+
+        /* ---- Submit (Register or Edit) ---- */
+        async function handlePatientSubmit(e) {
             e.preventDefault();
             const form = e.target;
+            const patientId = document.getElementById('editPatientId').value;
             const data = new URLSearchParams(new FormData(form));
-            const msgBox = document.getElementById('patientMsg');
-            
+
+            const method = editMode ? 'PUT' : 'POST';
+            const url    = editMode ? 'api/patients?patientId=' + patientId : 'api/patients';
+
             try {
-                const response = await fetch('api/patients', {
-                    method: 'POST',
+                const res    = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: data
                 });
-                const result = await response.json();
-                if(result.status === 'success') {
-                    msgBox.innerHTML = `<span class="text-success">${result.message} (${result.patientNumber})</span>`;
-                    setTimeout(() => { togglePatientModal(); loadPatients(); form.reset(); }, 2000);
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showPatientMsg(result.message + (result.patientNumber ? ' (' + result.patientNumber + ')' : ''), true);
+                    showToast(result.message, 'success');
+                    setTimeout(() => { closePatientModal(); loadPatients(); }, 1500);
                 } else {
-                    msgBox.innerHTML = `<span class="error-msg" style="display:block;">${result.message}</span>`;
+                    showPatientMsg(result.message || 'Operation failed.', false);
                 }
             } catch(e) {
-                msgBox.innerHTML = `<span class="error-msg" style="display:block;">Server error</span>`;
+                showPatientMsg('Server error. Please try again.', false);
             }
         }
 
-        function renderTable(data) {
-            const tbody = document.querySelector('#patientsTable tbody');
-            if(data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No patients found.</td></tr>'; return;
+        /* ---- Edit: fetch patient detail then open modal ---- */
+        async function editPatient(id) {
+            try {
+                const res  = await fetch('api/patients?id=' + id);
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    // Use list data (partial) for now
+                    openPatientModal({ id: data[0].id, firstName: data[0].name.split(' ')[0],
+                        lastName: data[0].name.split(' ').slice(1).join(' '),
+                        contact: data[0].contact, gender: data[0].gender });
+                } else {
+                    showToast('Could not load patient details.', 'error');
+                }
+            } catch {
+                showToast('Server error.', 'error');
             }
-            tbody.innerHTML = '';
-            data.forEach(p => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.id}</td><td>${p.number}</td><td>${p.name}</td><td>${p.contact}</td>
-                        <td><a href="#" style="color:var(--secondary)">View History</a></td>
-                    </tr>
-                `;
-            });
+        }
+
+        /* ---- Deactivate patient ---- */
+        async function deactivatePatient(id, name) {
+            if (!confirm(`Deactivate patient "${name}"?\n\nThis will hide them from active lists.`)) return;
+            try {
+                const data = new URLSearchParams();
+                data.append('patientId', id);
+                data.append('action', 'deactivate');
+                const res    = await fetch('api/patients', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('Patient deactivated successfully.', 'success');
+                    loadPatients();
+                } else {
+                    showToast(result.message || 'Failed to deactivate.', 'error');
+                }
+            } catch(e) {
+                showToast('Server error.', 'error');
+            }
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
     </script>
 </body>

@@ -29,6 +29,47 @@ public class BillingServlet extends HttpServlet {
     }
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter out = response.getWriter();
+
+        // Optional date filter; default to today
+        String dateStr = request.getParameter("date");
+        java.sql.Date date;
+        try {
+            date = (dateStr != null && !dateStr.isEmpty())
+                   ? java.sql.Date.valueOf(dateStr)
+                   : new java.sql.Date(System.currentTimeMillis());
+        } catch (IllegalArgumentException e) {
+            date = new java.sql.Date(System.currentTimeMillis());
+        }
+
+        java.util.List<Bill> bills = billDAO.findBillsByDate(date);
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < bills.size(); i++) {
+            Bill b = bills.get(i);
+            String method = b.getPaymentMethod() != null ? b.getPaymentMethod().name() : "";
+            String status = b.getPaymentStatus() != null ? b.getPaymentStatus().name() : "PENDING";
+            sb.append(String.format(
+                "{\"id\":%d,\"billNumber\":\"%s\",\"apptNumber\":\"%s\",\"patientName\":\"%s\",\"totalAmount\":%.2f,\"status\":\"%s\",\"method\":\"%s\"}",
+                b.getBillId(),
+                escapeJson(b.getBillNumber()),
+                escapeJson(b.getApptNumber()),
+                escapeJson(b.getPatientName()),
+                b.getTotalAmount(),
+                status,
+                method
+            ));
+            if (i < bills.size() - 1) sb.append(",");
+        }
+        sb.append("]");
+        out.print(sb.toString());
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
@@ -88,5 +129,10 @@ public class BillingServlet extends HttpServlet {
                  out.print(JsonUtil.createErrorResponse("Invalid input."));
             }
         }
+    }
+
+    private String escapeJson(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

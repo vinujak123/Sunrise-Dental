@@ -96,4 +96,42 @@ public class AppointmentServlet extends HttpServlet {
             out.print(JsonUtil.createErrorResponse("Invalid input data."));
         }
     }
+
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("application/json");
+        PrintWriter out = response.getWriter();
+
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("user") == null) {
+            out.print(JsonUtil.createErrorResponse("Unauthorized."));
+            return;
+        }
+        
+        com.sunrise.dental.model.User user = (com.sunrise.dental.model.User) session.getAttribute("user");
+
+        try {
+            int apptId = Integer.parseInt(request.getParameter("apptId"));
+            String newStatus = request.getParameter("status");
+
+            // Validate status
+            Appointment.Status status;
+            try {
+                status = Appointment.Status.valueOf(newStatus);
+            } catch (IllegalArgumentException ex) {
+                out.print(JsonUtil.createErrorResponse("Invalid status value."));
+                return;
+            }
+
+            boolean updated = apptDAO.updateStatus(apptId, status.name(), user.getUserId());
+            if (updated) {
+                out.print(JsonUtil.createSuccessResponse("Appointment status updated to " + status.name() + "."));
+            } else {
+                out.print(JsonUtil.createErrorResponse("Failed to update appointment status."));
+            }
+        } catch (Exception e) {
+            out.print(JsonUtil.createErrorResponse("Invalid input data."));
+        }
+    }
 }

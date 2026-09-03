@@ -51,4 +51,31 @@ public interface IUserDAO {
      * @return true if successful, false otherwise
      */
     boolean deactivate(int id);
+
+    /**
+     * Checks if a username already exists.
+     * @param username the username to check
+     * @return true if the username already exists
+     */
+    boolean usernameExists(String username);
+
+    /**
+     * Returns all users with is_active = 0 (pending Admin approval).
+     * @return a List of pending User objects
+     */
+    List<User> findPendingUsers();
+
+    /**
+     * Activates a pending user account (Admin approval).
+     * @param id the user ID to approve
+     * @return true if successful
+     */
+    boolean approve(int id);
+
+    /**
+     * Permanently deletes a pending user account (Admin rejection).
+     * @param id the user ID to reject
+     * @return true if successful
+     */
+    boolean reject(int id);
 }
