@@ -53,6 +53,15 @@ public class LoginServlet extends HttpServlet {
             HttpSession session = request.getSession(true);
             session.setAttribute("user", user);
             
+            // Security Hardening: Expire session after 30 minutes (1800 seconds)
+            session.setMaxInactiveInterval(1800);
+            
+            // Security Hardening: Secure the session cookie
+            String sessionCookie = "JSESSIONID=" + session.getId() + "; Path=" + request.getContextPath() + "; HttpOnly; SameSite=Strict; Max-Age=1800";
+            // If running on HTTPS, uncomment the next line:
+            // sessionCookie += "; Secure";
+            response.addHeader("Set-Cookie", sessionCookie);
+            
             // Build success JSON
             String json = String.format("{\"status\":\"success\",\"role\":\"%s\",\"name\":\"%s\"}", 
                                         user.getRole().name(), user.getFullName());
