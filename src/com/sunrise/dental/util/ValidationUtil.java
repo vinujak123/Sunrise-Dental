@@ -2,10 +2,7 @@ package com.sunrise.dental.util;
 
 import java.util.regex.Pattern;
 
-/**
- * ValidationUtil – provides centralized validation logic.
- * CIS6003 Advanced Programming – Sunrise Dental Clinic
- */
+
 public class ValidationUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");

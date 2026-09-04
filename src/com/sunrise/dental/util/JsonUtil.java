@@ -13,20 +13,20 @@ public class JsonUtil {
      * Creates a simple JSON success response.
      */
     public static String createSuccessResponse(String message) {
-        return "{\"status\":\"success\", \"message\":\"" + escapeJson(message) + "\"}";
+        return "{\"status\":\"success\", \"message\":\"" + escape(message) + "\"}";
     }
 
     /**
      * Creates a simple JSON error response.
      */
     public static String createErrorResponse(String message) {
-        return "{\"status\":\"error\", \"message\":\"" + escapeJson(message) + "\"}";
+        return "{\"status\":\"error\", \"message\":\"" + escape(message) + "\"}";
     }
 
     /**
      * Escapes basic JSON characters to prevent invalid format.
      */
-    private static String escapeJson(String text) {
+    public static String escape(String text) {
         if (text == null) return "";
         return text.replace("\"", "\\\"").replace("\n", "\\n");
     }
