@@ -19,38 +19,41 @@ public class PatientDAOImpl implements IPatientDAO {
 
     @Override
     public String registerPatient(Patient p) {
-        String sql = "{CALL sp_register_patient(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
-        try (Connection conn = dbManager.getConnection();
-             CallableStatement stmt = conn.prepareCall(sql)) {
-            
-            stmt.setString(1, p.getFirstName());
-            stmt.setString(2, p.getLastName());
-            stmt.setDate(3, p.getDateOfBirth());
-            stmt.setString(4, p.getGender() != null ? p.getGender().name() : null);
-            stmt.setString(5, p.getBloodGroup());
-            stmt.setString(6, p.getAddress());
-            stmt.setString(7, p.getCity());
-            stmt.setString(8, p.getContact());
-            stmt.setString(9, p.getEmail());
-            stmt.setString(10, p.getEmergencyContact());
-            stmt.setString(11, p.getMedicalNotes());
-            stmt.setString(12, p.getAllergies());
-            
-            // Output parameters
-            stmt.registerOutParameter(13, Types.INTEGER); // p_patient_id
-            stmt.registerOutParameter(14, Types.VARCHAR); // p_patient_number
-            stmt.registerOutParameter(15, Types.VARCHAR); // p_message
-            
-            stmt.execute();
-            
-            int patientId = stmt.getInt(13);
-            String patientNumber = stmt.getString(14);
-            
-            if (patientId > 0 && patientNumber != null) {
-                p.setPatientId(patientId);
-                p.setPatientNumber(patientNumber);
-                return patientNumber;
+        String nextNumberSql = "SELECT COALESCE(MAX(CAST(SUBSTRING(patient_number, 3) AS UNSIGNED)), 0) + 1 FROM patients";
+        String insertSql = "INSERT INTO patients (patient_number, first_name, last_name, date_of_birth, gender, " +
+                           "blood_group, address, city, contact, email, emergency_contact, medical_notes, allergies) " +
+                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = dbManager.getConnection()) {
+            conn.setAutoCommit(false);
+            int nextNumber = 1;
+            try (PreparedStatement numberStmt = conn.prepareStatement(nextNumberSql);
+                 ResultSet rs = numberStmt.executeQuery()) {
+                if (rs.next()) nextNumber = rs.getInt(1);
             }
+
+            String patientNumber = String.format("P-%04d", nextNumber);
+            try (PreparedStatement stmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, patientNumber);
+                stmt.setString(2, p.getFirstName());
+                stmt.setString(3, p.getLastName());
+                stmt.setDate(4, p.getDateOfBirth());
+                stmt.setString(5, p.getGender() != null ? p.getGender().name() : null);
+                stmt.setString(6, p.getBloodGroup());
+                stmt.setString(7, p.getAddress());
+                stmt.setString(8, p.getCity());
+                stmt.setString(9, p.getContact());
+                stmt.setString(10, p.getEmail());
+                stmt.setString(11, p.getEmergencyContact());
+                stmt.setString(12, p.getMedicalNotes());
+                stmt.setString(13, p.getAllergies());
+                stmt.executeUpdate();
+                try (ResultSet keys = stmt.getGeneratedKeys()) {
+                    if (keys.next()) p.setPatientId(keys.getInt(1));
+                }
+            }
+            conn.commit();
+            p.setPatientNumber(patientNumber);
+            return patientNumber;
         } catch (SQLException e) {
             e.printStackTrace();
         }
