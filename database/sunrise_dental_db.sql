@@ -30,6 +30,22 @@ CREATE TABLE users (
 ) ENGINE=InnoDB;
 
 -- ============================================================
+-- TABLE: notifications
+-- Unread staff notifications, scoped to admin and dentist users
+-- ============================================================
+CREATE TABLE notifications (
+    notification_id   INT           AUTO_INCREMENT PRIMARY KEY,
+    recipient_user_id INT           NOT NULL,
+    title             VARCHAR(120)  NOT NULL,
+    message           VARCHAR(255)  NOT NULL,
+    is_read           TINYINT(1)    DEFAULT 0,
+    created_at        TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    read_at           TIMESTAMP     NULL,
+    FOREIGN KEY (recipient_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_notification_recipient (recipient_user_id, is_read, created_at)
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- TABLE: dentists
 -- Dental practitioners at the clinic
 -- ============================================================

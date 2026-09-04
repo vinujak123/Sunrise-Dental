@@ -9,7 +9,7 @@ SETLOCAL
 
 :: ---- CONFIGURE THESE PATHS IF NEEDED ----------------------
 SET JAVA_HOME=C:\Program Files\Java\jdk-17
-SET TOMCAT_HOME=C:\xampp1\tomcat
+SET TOMCAT_HOME=D:\tomcat\apache-tomcat-8.5.93-windows-x64\apache-tomcat-8.5.93
 SET MYSQL_CONNECTOR=lib\mysql-connector-j-8.3.0.jar
 SET PROJECT_DIR=%~dp0
 :: ------------------------------------------------------------

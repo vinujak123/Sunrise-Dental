@@ -1,10 +1,13 @@
 package com.sunrise.dental.servlet;
 
 import com.sunrise.dental.dao.IAppointmentDAO;
+import com.sunrise.dental.dao.IPatientDAO;
 import com.sunrise.dental.dao.impl.AppointmentDAOImpl;
+import com.sunrise.dental.dao.impl.PatientDAOImpl;
 import com.sunrise.dental.model.Appointment;
 import com.sunrise.dental.model.User;
 import com.sunrise.dental.util.DateUtil;
+import com.sunrise.dental.util.EmailNotificationUtil;
 import com.sunrise.dental.util.JsonUtil;
 
 import javax.servlet.ServletException;
@@ -26,10 +29,12 @@ import java.util.List;
 public class AppointmentServlet extends HttpServlet {
 
     private IAppointmentDAO apptDAO;
+    private IPatientDAO patientDAO;
 
     @Override
     public void init() throws ServletException {
         apptDAO = new AppointmentDAOImpl();
+        patientDAO = new PatientDAOImpl();
     }
 
     @Override
@@ -87,6 +92,8 @@ public class AppointmentServlet extends HttpServlet {
             if (result != null && result.startsWith("ERROR:")) {
                 out.print(JsonUtil.createErrorResponse(result.substring(6)));
             } else if (result != null) {
+                patientDAO.findById(appt.getPatientId()).ifPresent(patient ->
+                        EmailNotificationUtil.sendAppointmentConfirmation(patient, appt));
                 out.print(String.format("{\"status\":\"success\",\"message\":\"Appointment Booked: %s\"}", result));
             } else {
                 out.print(JsonUtil.createErrorResponse("Unknown error occurred while booking."));
