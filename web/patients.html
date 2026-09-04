@@ -216,7 +216,7 @@
                 const data = await res.json();
                 renderPatients(data);
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Could not load patient data.</td></tr>';
+                renderPatients([]);
             }
         }
 
@@ -303,7 +303,7 @@
                 const data = new URLSearchParams();
                 data.append('patientId', id);
                 data.append('action', 'deactivate');
-                const res    = await fetch('api/patients', {
+                const res    = await fetch('api/patients?patientId=' + encodeURIComponent(id), {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: data

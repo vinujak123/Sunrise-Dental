@@ -109,8 +109,7 @@
                 
                 renderTable(data);
             } catch (e) {
-                console.error('Admin API error:', e);
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Server error. Please ensure you are logged in as Admin.</td></tr>';
+                renderTable([]);
             }
         }
 

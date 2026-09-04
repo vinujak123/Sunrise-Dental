@@ -135,6 +135,7 @@ function setupDashboardLayout() {
 
     if (nameEl) nameEl.textContent = localStorage.getItem('userName') || 'User';
     if (roleEl) roleEl.textContent = toTitleCase(rawRole);
+    setupNotifications();
 
     // Role-based nav visibility
     const role = localStorage.getItem('userRole');
@@ -162,6 +163,127 @@ function setupDashboardLayout() {
             }
         });
     }
+}
+
+/* =====================================================================
+   NOTIFICATIONS
+   ===================================================================== */
+function setupNotifications() {
+    const role = localStorage.getItem('userRole');
+    const header = document.querySelector('.top-header');
+    if (!header || (role !== 'ADMIN' && role !== 'DENTIST')) return;
+    if (document.getElementById('notificationButton')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'notification-wrap';
+    wrapper.innerHTML = `
+        <button type="button" class="notification-button" id="notificationButton"
+                aria-label="Notifications" title="Notifications">
+            <span aria-hidden="true">&#128276;</span>
+            <span class="notification-count hidden" id="notificationCount">0</span>
+        </button>
+        <div class="notification-panel hidden" id="notificationPanel" aria-live="polite">
+            <div class="notification-panel-header">
+                <strong>Notifications</strong>
+                <span class="text-muted" id="notificationSummary">Unread</span>
+            </div>
+            <div id="notificationList"></div>
+        </div>`;
+    header.appendChild(wrapper);
+
+    const button = document.getElementById('notificationButton');
+    const panel = document.getElementById('notificationPanel');
+    button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        panel.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (event) => {
+        if (!wrapper.contains(event.target)) panel.classList.add('hidden');
+    });
+    loadNotifications();
+}
+
+async function loadNotifications() {
+    try {
+        const response = await fetch('api/notifications');
+        if (!response.ok) return;
+        const notifications = await response.json();
+        renderNotifications(Array.isArray(notifications) ? notifications : []);
+    } catch (error) {
+        renderNotifications([]);
+    }
+}
+
+function renderNotifications(notifications) {
+    const list = document.getElementById('notificationList');
+    const count = document.getElementById('notificationCount');
+    const summary = document.getElementById('notificationSummary');
+    if (!list || !count || !summary) return;
+
+    count.textContent = notifications.length;
+    count.classList.toggle('hidden', notifications.length === 0);
+    summary.textContent = notifications.length + ' unread';
+    list.innerHTML = '';
+
+    if (notifications.length === 0) {
+        list.innerHTML = '<p class="notification-empty">No new notifications.</p>';
+        return;
+    }
+
+    notifications.forEach((notification) => {
+        const item = document.createElement('div');
+        item.className = 'notification-item';
+        item.dataset.notificationId = notification.id;
+        item.innerHTML = `
+            <div class="notification-copy">
+                <strong></strong>
+                <p></p>
+                <small></small>
+            </div>
+            <button type="button" class="notification-read" aria-label="Mark notification as read"
+                    title="Mark as read">&#10003;</button>`;
+        item.querySelector('strong').textContent = notification.title || 'Notification';
+        item.querySelector('p').textContent = notification.message || '';
+        item.querySelector('small').textContent = formatNotificationDate(notification.createdAt);
+        item.querySelector('.notification-read').addEventListener('click', () => {
+            markNotificationAsRead(notification.id, item);
+        });
+        list.appendChild(item);
+    });
+}
+
+async function markNotificationAsRead(notificationId, item) {
+    try {
+        const data = new URLSearchParams({ notificationId: notificationId });
+        const response = await fetch('api/notifications', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: data
+        });
+        const result = await response.json();
+        if (response.ok && result.status === 'success') {
+            item.remove();
+            const remaining = document.querySelectorAll('.notification-item').length;
+            const count = document.getElementById('notificationCount');
+            const summary = document.getElementById('notificationSummary');
+            if (count) {
+                count.textContent = remaining;
+                count.classList.toggle('hidden', remaining === 0);
+            }
+            if (summary) summary.textContent = remaining + ' unread';
+            if (remaining === 0) {
+                document.getElementById('notificationList').innerHTML = '<p class="notification-empty">No new notifications.</p>';
+            }
+        }
+    } catch (error) {
+        showToast('Could not update notification.', 'error');
+    }
+}
+
+function formatNotificationDate(value) {
+    if (!value) return '';
+    const date = new Date(value.replace(' ', 'T'));
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
 /* =====================================================================

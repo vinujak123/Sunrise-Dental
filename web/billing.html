@@ -128,10 +128,10 @@
                     const data = await response.json();
                     renderTable(data);
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Failed to load bills.</td></tr>';
+                    renderTable([]);
                 }
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Server error.</td></tr>';
+                renderTable([]);
             }
         }
 

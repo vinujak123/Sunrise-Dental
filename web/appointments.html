@@ -218,10 +218,10 @@
                     const data = await response.json();
                     renderTable(data);
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Failed to load.</td></tr>';
+                    renderTable([]);
                 }
             } catch(e) {
-                 tbody.innerHTML = '<tr><td colspan="7" class="text-center">Server error.</td></tr>';
+                 renderTable([]);
             }
         }
 

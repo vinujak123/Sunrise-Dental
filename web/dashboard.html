@@ -144,8 +144,10 @@
                 }
 
             } catch (e) {
-                console.log('Error loading data', e);
-                document.getElementById('todayApptsBody').innerHTML = '<tr><td colspan="5" class="text-center">Error loading dashboard data.</td></tr>';
+                document.getElementById('statAppointments').textContent = '0';
+                document.getElementById('statCompleted').textContent = '0';
+                document.getElementById('statRevenue').textContent = formatCurrency(0);
+                document.getElementById('todayApptsBody').innerHTML = '<tr><td colspan="5" class="text-center">No appointments scheduled for today.</td></tr>';
             }
         }
         
